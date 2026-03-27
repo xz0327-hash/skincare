@@ -3,241 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小竹的後宮抽獎機</title>
+    <title>小竹的後宮抽獎機 v2</title>
     <style>
         :root {
-            --bg-color: #f8f5f2;
+            --bg-color: #fdfaf7;
             --card-bg: #ffffff;
-            --primary-text: #4a4a4a;
-            --accent-care: #e8f1f2; /* 保養品淡藍 */
-            --accent-makeup: #fce4ec; /* 化妝品粉紅 */
-            --accent-tool: #f0f4c3; /* 工具淡綠 */
-            --active-color: #d4a373;
-            --alert-red: #ff8a80;
+            --primary-text: #5a5a5a;
+            --accent-color: #d4a373;
+            --alert-red: #ff7043;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, "Noto Sans TC", sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
             margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
+            padding-bottom: 100px; /* 留空間給底部的按鈕 */
         }
 
-        h1 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; letter-spacing: 1px; }
+        h1 { font-size: 1.2rem; margin: 10px 0 20px; font-weight: 500; letter-spacing: 2px; color: #8d6e63; }
 
-        /* 快捷鍵區域 */
+        /* 認證區域 */
+        #auth-section {
+            background: #fff; padding: 20px; border-radius: 20px;
+            margin-bottom: 20px; width: 100%; max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        #auth-section input {
+            width: 100%; margin-bottom: 12px; padding: 12px;
+            border: 1px solid #eee; border-radius: 10px; box-sizing: border-box;
+        }
+
+        /* 快捷鍵 */
         .quick-modes {
             display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px; width: 100%; max-width: 500px; margin-bottom: 25px;
+            gap: 12px; width: 100%; max-width: 500px; margin-bottom: 25px;
         }
         .mode-btn {
-            background: var(--card-bg); border: none; padding: 12px;
-            border-radius: 12px; font-size: 0.9rem; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
+            background: white; border: 1px solid #eee; padding: 12px;
+            border-radius: 15px; font-size: 0.9rem; cursor: pointer;
+            transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-        .mode-btn:active { transform: scale(0.95); background: var(--active-color); color: white; }
+        .mode-btn:active { background: var(--accent-color); color: white; }
 
-        /* 分類方塊區域 */
-        .section-title { width: 100%; max-width: 500px; margin: 15px 0 8px; font-size: 0.9rem; color: #888; }
+        /* 分類區塊 */
+        .group-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .group-title { 
+            font-size: 0.9rem; font-weight: bold; color: #bc8f8f; 
+            margin: 20px 0 10px 5px; display: flex; align-items: center;
+        }
+        .group-title::before { content: ""; width: 4px; height: 14px; background: #d4a373; margin-right: 8px; border-radius: 2px; }
+
         .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px; width: 100%; max-width: 500px; margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
         }
         .category-block {
-            background: var(--card-bg); aspect-ratio: 1/1; border-radius: 15px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            font-size: 0.85rem; cursor: pointer; text-align: center; padding: 5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03); border: 2px solid transparent;
-            transition: 0.3s; user-select: none;
+            background: white; aspect-ratio: 1/1; border-radius: 18px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.85rem; cursor: pointer; text-align: center; padding: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03); border: 2.5px solid transparent;
+            transition: 0.2s;
         }
-        .category-block.selected { border-color: var(--active-color); background: #fffcf9; font-weight: bold; }
-        .category-block i { font-size: 1.5rem; margin-bottom: 5px; }
+        .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; }
 
-        /* 開始按鈕 */
+        /* 抽獎按鈕 */
         #draw-btn {
-            position: fixed; bottom: 30px; width: 80%; max-width: 400px;
-            background: var(--active-color); color: white; border: none;
-            padding: 18px; border-radius: 50px; font-size: 1.1rem;
-            box-shadow: 0 10px 20px rgba(212, 163, 115, 0.3); z-index: 100;
+            position: fixed; bottom: 30px; width: 85%; max-width: 400px;
+            background: #d4a373; color: white; border: none;
+            padding: 20px; border-radius: 50px; font-size: 1.1rem;
+            box-shadow: 0 8px 20px rgba(212, 163, 115, 0.4); z-index: 100;
+            font-weight: bold; letter-spacing: 1px;
         }
 
-        /* 結果彈窗 */
+        /* 結果視窗修正 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 200;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 200;
             justify-content: center; align-items: center;
         }
         .modal-content {
-            background: white; width: 85%; max-width: 350px; padding: 30px;
-            border-radius: 25px; text-align: center; position: relative;
+            background: white; width: 85%; max-width: 380px; 
+            max-height: 80vh; /* 限制高度 */
+            padding: 25px; border-radius: 30px; position: relative;
+            display: flex; flex-direction: column;
         }
-        .modal.alert .modal-content { border: 4px solid var(--alert-red); }
-        .result-item { margin: 15px 0; padding: 10px; border-bottom: 1px dashed #eee; }
-        .result-name { font-weight: bold; font-size: 1.1rem; color: #d48e4d; }
-        .result-note { font-size: 0.8rem; color: #999; margin-top: 5px; }
+        #result-list {
+            overflow-y: auto; /* 開啟垂直滑動 */
+            flex-grow: 1;
+            margin: 15px 0;
+            padding-right: 5px;
+        }
+        .result-item { 
+            background: #fdfaf7; margin-bottom: 12px; padding: 15px; 
+            border-radius: 15px; border-left: 5px solid #ede0d4;
+        }
+        .result-brand { font-size: 0.75rem; color: #9a8c98; text-transform: uppercase; letter-spacing: 1px; }
+        .result-name { font-weight: bold; font-size: 1.05rem; color: #4e342e; margin: 4px 0; }
+        .result-note { font-size: 0.8rem; color: #8d6e63; font-style: italic; }
+
+        .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.85rem; margin-top: 5px; border-top: 1px solid #ffebee; padding-top: 5px; }
     </style>
 </head>
 <body>
 
     <h1>✨ 小竹的後宮抽獎機</h1>
 
-    <div class="quick-modes">
+    <!-- 登入區域 -->
+    <div id="auth-section">
+        <input type="password" id="input-token" placeholder="貼上 Notion Token">
+        <input type="text" id="input-dbid" placeholder="貼上 Database ID">
+        <button onclick="saveAuth()" style="width:100%; padding:12px; background:#d4a373; color:white; border:none; border-radius:10px;">開始裝修化妝台</button>
+    </div>
+
+    <!-- 模式切換 -->
+    <div class="quick-modes" id="modes-ui" style="display:none;">
         <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
         <button class="mode-btn" onclick="setMode('full')">💄 全妝</button>
         <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
     </div>
 
-    <div id="main-ui">正在連線 Notion...</div>
+    <!-- 分類分區顯示 -->
+    <div id="main-ui"></div>
 
-    <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
+    <button id="draw-btn" onclick="startDraw()" style="display:none;">今日寵幸 ➔</button>
 
     <!-- 結果彈窗 -->
     <div id="result-modal" class="modal" onclick="this.style.display='none'">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="modal-title">✨ 今日菜單 ✨</h2>
+            <h2 style="text-align:center; color:#8d6e63; font-size:1.2rem;">✨ 今日寵幸名單 ✨</h2>
             <div id="result-list"></div>
-            <p id="declutter-msg" style="color:red; font-weight:bold; margin-top:20px; display:none;"></p>
-            <button onclick="document.getElementById('result-modal').style.display='none'" style="margin-top:20px; padding:10px 20px; border-radius:20px; border:none; background:#eee;">跪謝主子</button>
+            <button onclick="document.getElementById('result-modal').style.display='none'" style="width:100%; padding:15px; border-radius:50px; border:none; background:#ede0d4; color:#795548; font-weight:bold;">謝主隆恩</button>
         </div>
     </div>
 
     <script>
-        // --- 填寫這裡 ---
-        const NOTION_TOKEN = "ntn_k94971572797IvZc9C8t0I0zzD7AzWTjBhSWr89rLYdb5g";
-        const DATABASE_ID = "173236131e9f80babac9fb245e6f8d2b";
-
+        let NOTION_TOKEN = localStorage.getItem('notion_token');
+        let DATABASE_ID = localStorage.getItem('notion_dbid');
         let allProducts = [];
-        let categoriesByGroup = {};
 
-async function init() {
-    const container = document.getElementById('main-ui');
-    try {
-        // 使用 corsproxy.io 來幫忙繞過連線限制
-        const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-
-        const response = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${NOTION_TOKEN}`,
-                'Notion-Version': '2022-06-28',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({}) 
-        });
-
-        const data = await response.json();
-        
-        if (data.object === 'error') throw new Error(data.message);
-
-        allProducts = data.results.map(item => {
-            const p = item.properties;
-            // 處理關連欄位 (統計)
-            const mainCatName = p["統計"]?.relation[0] ? "已分類" : "未分類"; 
+        async function init() {
+            if (!NOTION_TOKEN || !DATABASE_ID) return;
             
-            return {
-                name: p["名稱"]?.title[0]?.plain_text || "未命名",
-                subCat: p["分類"]?.select?.name || "未分類",
-                daysLeft: p["公式_到期天數"]?.formula?.number ?? 999,
-                note: p["使用備註"]?.rich_text[0]?.plain_text || ""
-            };
-        });
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('modes-ui').style.display = 'grid';
+            document.getElementById('draw-btn').style.display = 'block';
+            document.getElementById('main-ui').innerHTML = "<p style='text-align:center;'>正在從 Notion 搬運後宮...</p>";
 
-        renderUI();
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = `<div style="color:red; padding:20px;">連線失敗：${e.message}<br>請檢查 Token 與 ID 是否正確，且機器人已加入頁面。</div>`;
-    }
-}
+            try {
+                const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+
+                const response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${NOTION_TOKEN}`,
+                        'Notion-Version': '2022-06-28',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({}) 
+                });
+
+                const data = await response.json();
+                
+                allProducts = data.results.map(item => {
+                    const p = item.properties;
+                    // 修正：抓取「統計」這個 Relation 欄位的名稱（假設名稱存放在這裡）
+                    // 若抓不到，我們先預設顯示
+                    let group = "其他";
+                    const stats = p["統計"]?.relation;
+                    // 註：Relation 欄位通常需要另一次 Query 抓名稱，我們先用簡單邏輯：
+                    // 如果分類是底妝/腮紅等，歸類為化妝品，其餘為保養品
+                    const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
+                    const sub = p["分類"]?.select?.name || "未分類";
+                    group = makeupCats.includes(sub) ? "💄 化妝品" : "💧 保養品";
+                    if (sub === '工具') group = "🔧 工具";
+
+                    return {
+                        name: p["名稱"]?.title[0]?.plain_text || "未命名",
+                        brand: p["品牌"]?.select?.name || p["品牌"]?.rich_text?.[0]?.plain_text || "",
+                        mainGroup: group,
+                        subCat: sub,
+                        daysLeft: p["公式_到期天數"]?.formula?.number ?? 999,
+                        note: p["使用備註"]?.rich_text[0]?.plain_text || ""
+                    };
+                });
+
+                renderUI();
+            } catch (e) {
+                localStorage.clear();
+                alert("連線失敗，請檢查資料後重新整理！");
+                location.reload();
+            }
+        }
+
         function renderUI() {
             const container = document.getElementById('main-ui');
             container.innerHTML = "";
             
-            // 找出所有不重複的小分類
-            const subs = [...new Set(allProducts.map(p => p.subCat))];
+            // 按大項分組
+            const groups = ["💧 保養品", "💄 化妝品", "🔧 工具"];
             
-            const grid = document.createElement('div');
-            grid.className = "grid";
-            subs.forEach(s => {
-                const div = document.createElement('div');
-                div.className = "category-block";
-                div.id = `cat-${s}`;
-                div.innerHTML = `<span>${s}</span>`;
-                div.onclick = () => div.classList.toggle('selected');
-                grid.appendChild(div);
+            groups.forEach(gName => {
+                const groupProducts = allProducts.filter(p => p.mainGroup === gName);
+                if (groupProducts.length === 0) return;
+
+                const subCats = [...new Set(groupProducts.map(p => p.subCat))];
+                
+                const section = document.createElement('div');
+                section.className = "group-container";
+                section.innerHTML = `<div class="group-title">${gName}</div>`;
+                
+                const grid = document.createElement('div');
+                grid.className = "grid";
+                
+                subCats.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = "category-block";
+                    div.id = `cat-${s}`;
+                    div.innerHTML = `<span>${s}</span>`;
+                    div.onclick = () => div.classList.toggle('selected');
+                    grid.appendChild(div);
+                });
+                
+                section.appendChild(grid);
+                container.appendChild(section);
             });
-            container.appendChild(grid);
         }
 
         function setMode(mode) {
             document.querySelectorAll('.category-block').forEach(b => b.classList.remove('selected'));
             let targets = [];
-            if (mode === 'simple') targets = ['化妝水', '乳液/霜', '防曬/妝前', '定妝'];
-            if (mode === 'full') targets = [...new Set(allProducts.map(p => p.subCat))];
-            
-            targets.forEach(t => {
-                const el = document.getElementById(`cat-${t}`);
-                if (el) el.classList.add('selected');
-            });
+            if (mode === 'simple') targets = ['化妝水', '乳液/霜', '防曬/妝前'];
+            if (mode === 'full' || mode === 'random') {
+                document.querySelectorAll('.category-block').forEach(b => b.classList.add('selected'));
+            } else {
+                targets.forEach(t => {
+                    const el = document.getElementById(`cat-${t}`);
+                    if (el) el.classList.add('selected');
+                });
+            }
         }
 
         function startDraw() {
             const selectedCats = Array.from(document.querySelectorAll('.category-block.selected')).map(el => el.innerText);
-            if (selectedCats.length === 0) return alert("請先選幾個分類喔！");
+            if (selectedCats.length === 0) return alert("主子請先選幾個分類方塊！");
 
             let results = [];
-            let forceAlert = false;
-
             selectedCats.forEach(cat => {
                 const pool = allProducts.filter(p => p.subCat === cat);
                 if (pool.length > 0) {
-                    // 權重計算
                     let weightedPool = [];
                     pool.forEach(p => {
-                        let weight = 1;
-                        if (p.daysLeft < 0) weight = 0.1; // 過期品其實機率該降低，但會觸發強制警報
-                        else if (p.daysLeft < 30) weight = 15;
-                        else if (p.daysLeft < 180) weight = 5;
-                        
-                        for(let i=0; i<weight*10; i++) weightedPool.push(p);
+                        let weight = (p.daysLeft < 30 && p.daysLeft >= 0) ? 20 : (p.daysLeft < 180 ? 5 : 1);
+                        for(let i=0; i<weight; i++) weightedPool.push(p);
                     });
-                    const pick = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-                    results.push(pick);
-                    if (pick.daysLeft < 0) forceAlert = true;
+                    results.push(weightedPool[Math.floor(Math.random() * weightedPool.length)]);
                 }
             });
 
-            showResult(results, forceAlert);
+            showResult(results);
         }
 
-        function showResult(items, isExpired) {
-            const modal = document.getElementById('result-modal');
+        function showResult(items) {
             const list = document.getElementById('result-list');
-            const declutter = document.getElementById('declutter-msg');
-            
             list.innerHTML = items.map(i => `
                 <div class="result-item">
-                    <div style="font-size:0.8rem; color:#999">${i.subCat}</div>
+                    <div class="result-brand">${i.brand}</div>
                     <div class="result-name">${i.name}</div>
                     ${i.note ? `<div class="result-note">💡 ${i.note}</div>` : ''}
+                    ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 斷捨離警告：這罐已過期！</div>` : ''}
                 </div>
             `).join('');
+            document.getElementById('result-modal').style.display = 'flex';
+        }
 
-            // A+B 混合警報
-            declutter.style.display = "none";
-            modal.classList.remove('alert');
-            
-            if (isExpired) {
-                modal.classList.add('alert');
-                declutter.innerText = "🚨 斷捨離警告：抽到過期品了！主子，這罐真的該說再見了！";
-                declutter.style.display = "block";
-            } else if (Math.random() < 0.2) {
-                declutter.innerText = "🧐 靈魂拷問：這罐妳現在用還會心動嗎？不心動就送人吧！";
-                declutter.style.display = "block";
-            }
-
-            modal.style.display = "flex";
+        function saveAuth() {
+            localStorage.setItem('notion_token', document.getElementById('input-token').value.trim());
+            localStorage.setItem('notion_dbid', document.getElementById('input-dbid').value.trim());
+            location.reload();
         }
 
         init();
