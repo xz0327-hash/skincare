@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
-    
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>後宮抽獎機 v6.1</title>
+    <title>後宮抽獎機 v7</title>
 
-    <link rel="apple-touch-icon" href="icon.jpg">
-    <link rel="icon" type="image/png" href="icon.jpg">
-
+    <!-- 桌面圖示設定 (已更名為小寫 icon.png) -->
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="後宮抽獎">
 
-    
     <style>
         :root {
             --bg-color: #fdfaf7;
@@ -22,6 +19,7 @@
             --primary-text: #5a5a5a;
             --accent-color: #d4a373;
             --alert-red: #ff7043;
+            --soft-pink: #fdf2f2;
         }
 
         body {
@@ -30,265 +28,103 @@
             color: var(--primary-text);
             margin: 0; padding: 15px;
             display: flex; flex-direction: column; align-items: center;
-            padding-bottom: 120px;
+            padding-bottom: 130px; /* 為大按鈕預留空間 */
         }
 
-        h1 { font-size: 1.2rem; margin: 15px 0; font-weight: 500; letter-spacing: 2px; color: #8d6e63; }
+        /* 標題調大 */
+        h1 { font-size: 1.5rem; margin: 20px 0; font-weight: 600; letter-spacing: 3px; color: #8d6e63; }
 
-        /* 認證區域 */
         #auth-section {
-            background: #fff; padding: 25px; border-radius: 20px;
+            background: #fff; padding: 30px; border-radius: 25px;
             margin-top: 20px; width: 100%; max-width: 350px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;
         }
         #auth-section input {
-            width: 100%; margin-bottom: 12px; padding: 12px;
-            border: 1px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 1rem;
+            width: 100%; margin-bottom: 15px; padding: 15px;
+            border: 1px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1.1rem;
         }
 
-        /* 快捷鍵區域 */
         .quick-modes {
-            display: flex; gap: 10px; width: 100%; max-width: 600px; 
-            margin-bottom: 25px; flex-wrap: wrap; justify-content: center;
+            display: flex; gap: 12px; width: 100%; max-width: 600px; 
+            margin-bottom: 30px; flex-wrap: wrap; justify-content: center;
         }
         .mode-btn {
-            background: white; border: 1px solid #eee; padding: 10px 18px;
-            border-radius: 25px; font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+            background: white; border: 1px solid #eee; padding: 12px 20px;
+            border-radius: 30px; font-size: 1rem; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
         .mode-btn.clear { color: var(--alert-red); border-color: #ffebee; }
 
-        /* 分類區塊 */
-        .group-container { width: 100%; max-width: 800px; margin-bottom: 25px; }
-        .group-title { font-size: 1rem; font-weight: bold; color: #bc8f8f; margin: 15px 0 12px 5px; }
+        .group-container { width: 100%; max-width: 800px; margin-bottom: 30px; }
+        .group-title { font-size: 1.1rem; font-weight: bold; color: #bc8f8f; margin: 20px 0 15px 5px; }
         
         .grid-flow {
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
-            gap: 12px; width: 100%;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+            gap: 15px; width: 100%;
         }
 
+        /* 電腦版更大的方塊 */
         @media (min-width: 600px) {
-            .grid-flow { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 20px; }
-            .category-block { font-size: 1rem !important; }
+            .grid-flow { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px; }
+            .category-block { font-size: 1.15rem !important; }
+            h1 { font-size: 2rem; }
         }
 
+        /* 分類方塊字體調大至 1.05rem */
         .category-block {
-            background: white; aspect-ratio: 1/1; border-radius: 18px;
+            background: white; aspect-ratio: 1/1; border-radius: 20px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 0.95rem; cursor: pointer; text-align: center; padding: 8px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.04); border: 2.5px solid transparent;
+            font-size: 1.05rem; font-weight: 500; cursor: pointer; text-align: center; padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 3px solid transparent;
             transition: 0.15s; color: #6d4c41;
         }
-        .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; }
+        .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; transform: scale(1.02); }
 
-        /* 抽獎按鈕 */
+        /* 抽獎按鈕字體加粗加大 */
         #draw-btn {
-            position: fixed; bottom: 30px; width: 85%; max-width: 400px;
+            position: fixed; bottom: 35px; width: 85%; max-width: 450px;
             background: #d4a373; color: white; border: none;
-            padding: 20px; border-radius: 50px; font-size: 1.1rem; font-weight: bold;
-            box-shadow: 0 8px 25px rgba(212, 163, 115, 0.4); z-index: 100;
+            padding: 22px; border-radius: 60px; font-size: 1.25rem; font-weight: bold;
+            box-shadow: 0 10px 30px rgba(212, 163, 115, 0.4); z-index: 100;
+            cursor: pointer;
         }
 
-        /* 結果視窗 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 200;
             justify-content: center; align-items: center;
         }
         .modal-content {
-            background: #fdfaf7; width: 90%; max-width: 400px; max-height: 85vh;
-            padding: 25px; border-radius: 35px; display: flex; flex-direction: column;
+            background: #fdfaf7; width: 90%; max-width: 420px; max-height: 85vh;
+            padding: 30px; border-radius: 40px; display: flex; flex-direction: column;
         }
-        #result-list { overflow-y: auto; flex-grow: 1; margin: 15px 0; }
-        .result-group { margin-bottom: 22px; }
-        .result-group-header { font-size: 0.85rem; color: #bc8f8f; border-bottom: 1px dashed #ede0d4; padding-bottom: 6px; margin-bottom: 12px; font-weight: bold; }
-        .result-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 18px; }
-        .result-brand { font-size: 0.7rem; color: #9a8c98; letter-spacing: 0.8px; text-transform: uppercase; }
-        .result-name { font-weight: bold; font-size: 1.05rem; color: #4e342e; margin: 2px 0; }
-        .result-note { font-size: 0.85rem; color: #8d6e63; margin-top: 5px; }
-        .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.75rem; margin-top: 8px; border-top: 1px solid #fff3e0; padding-top: 8px; }
+        #result-list { overflow-y: auto; flex-grow: 1; margin: 20px 0; }
+        .result-group { margin-bottom: 25px; }
+        .result-group-header { font-size: 1rem; color: #bc8f8f; border-bottom: 1.5px dashed #ede0d4; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold; }
+        
+        /* 結果字體調大 */
+        .result-item { background: white; margin-bottom: 12px; padding: 18px; border-radius: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .result-brand { font-size: 0.8rem; color: #9a8c98; letter-spacing: 1px; text-transform: uppercase; }
+        .result-name { font-weight: bold; font-size: 1.2rem; color: #4e342e; margin: 4px 0; }
+        .result-note { font-size: 0.95rem; color: #8d6e63; margin-top: 8px; line-height: 1.5; }
+        
+        .priority-tag { display: inline-block; background: #fff3e0; color: #e65100; font-size: 0.75rem; padding: 4px 10px; border-radius: 8px; margin-top: 8px; font-weight: bold; }
+        .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.85rem; margin-top: 10px; border-top: 1px solid #fff3e0; padding-top: 10px; }
+
+        .soul-question {
+            background: var(--soft-pink); border: 2px dashed #f4d3d3; padding: 20px;
+            border-radius: 25px; margin-top: 15px; text-align: center;
+        }
+        .soul-question p { margin: 0; font-size: 1rem; color: #c62828; line-height: 1.6; font-weight: 500; }
     </style>
 </head>
 <body>
 
-    <h1>✨ 後宮抽獎機</h1>
+    <h1>✨ 後宮寵幸抽獎機</h1>
 
-    <!-- 認證區：順序已調換 -->
     <div id="auth-section" style="display:none;">
-        <h3 style="color:#8d6e63; font-size:1.1rem;">🔑 請輸入連線金鑰</h3>
-        <input type="text" id="input-dbid" placeholder="1. 先貼上 Database ID">
-        <input type="password" id="input-token" placeholder="2. 再貼上 Notion Token">
-        <button onclick="saveAuth()" style="width:100%; padding:15px; background:#d4a373; color:white; border:none; border-radius:12px; font-weight:bold;">開啟後宮名單</button>
-    </div>
-
-    <div id="app-container" style="display:none; width:100%; max-width:800px;">
-        <div class="quick-modes">
-            <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
-            <button class="mode-btn" onclick="setMode('full')">💄 全選</button>
-            <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
-            <button class="mode-btn clear" onclick="setMode('clear')">🧹 清除</button>
-        </div>
-        <div id="main-ui"></div>
-        <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
-    </div>
-
-    <div id="result-modal" class="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 style="text-align:center; color:#8d6e63; font-size:1.3rem; margin-top:0;">✨ 今日寵幸名單 ✨</h2>
-            <div id="result-list"></div>
-            <button onclick="closeModal()" style="width:100%; padding:18px; border-radius:50px; border:none; background:#d4a373; color:white; font-weight:bold;">恭迎娘娘梳妝打扮～</button>
-        </div>
-    </div>
-
-    <script>
-        let NOTION_TOKEN = localStorage.getItem('notion_token');
-        let DATABASE_ID = localStorage.getItem('notion_dbid');
-        let allProducts = [];
-
-        async function init() {
-            if (!NOTION_TOKEN || !DATABASE_ID) {
-                document.getElementById('auth-section').style.display = 'block';
-                return;
-            }
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block';
-            document.getElementById('main-ui').innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>👸 正在召喚後宮...</p>";
-
-            try {
-                const url = `https://api.notion.com/v1/databases/${DATABASE_ID.trim()}/query`;
-                const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${NOTION_TOKEN.trim()}`, 
-                        'Notion-Version': '2022-06-28', 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({}) 
-                });
-                const data = await response.json();
-                if (data.object === 'error') throw new Error(data.message);
-
-                allProducts = data.results.map(item => {
-                    const p = item.properties;
-                    const sub = p["分類"]?.select?.name || "未分類";
-                    const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
-                    return {
-                        name: p["名稱"]?.title[0]?.plain_text || "未命名",
-                        brand: p["品牌"]?.select?.name || p["品牌"]?.rich_text?.[0]?.plain_text || "無品牌",
-                        mainGroup: makeupCats.includes(sub) ? "💄 化妝品" : (sub === '工具' ? "🔧 工具" : "💧 保養品"),
-                        subCat: sub,
-                        daysLeft: p["公式_到期天數"]?.formula?.number ?? 999,
-                        note: p["使用備註"]?.rich_text[0]?.plain_text || ""
-                    };
-                });
-                renderUI();
-            } catch (e) {
-                alert("連線出錯！請檢查 ID 與 Token 是否正確，並重新輸入。");
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        function renderUI() {
-            const container = document.getElementById('main-ui');
-            container.innerHTML = "";
-            const groups = ["💧 保養品", "💄 化妝品", "🔧 工具"];
-            groups.forEach(gName => {
-                const groupProducts = allProducts.filter(p => p.mainGroup === gName);
-                if (groupProducts.length === 0) return;
-                const subCats = [...new Set(groupProducts.map(p => p.subCat))];
-                const section = document.createElement('div');
-                section.className = "group-container";
-                section.innerHTML = `<div class="group-title">${gName}</div>`;
-                const grid = document.createElement('div');
-                grid.className = "grid-flow";
-                subCats.forEach(s => {
-                    const div = document.createElement('div');
-                    div.className = "category-block";
-                    div.id = `cat-${s}`;
-                    div.innerHTML = `<span>${s}</span>`;
-                    div.onclick = () => div.classList.toggle('selected');
-                    grid.appendChild(div);
-                });
-                section.appendChild(grid);
-                container.appendChild(section);
-            });
-        }
-
-        function setMode(mode) {
-            const blocks = Array.from(document.querySelectorAll('.category-block'));
-            blocks.forEach(b => b.classList.remove('selected'));
-            if (mode === 'full') {
-                blocks.forEach(b => b.classList.add('selected'));
-            } else if (mode === 'simple') {
-                ['化妝水', '乳液/霜', '防曬/妝前'].forEach(t => {
-                    const el = document.getElementById(`cat-${t}`);
-                    if (el) el.classList.add('selected');
-                });
-            } else if (mode === 'random') {
-                const count = Math.floor(Math.random() * 4) + 4; 
-                [...blocks].sort(() => 0.5 - Math.random()).slice(0, count).forEach(b => b.classList.add('selected'));
-            }
-        }
-
-        function startDraw() {
-            const selectedBlocks = Array.from(document.querySelectorAll('.category-block.selected'));
-            if (selectedBlocks.length === 0) return alert("主子，請先選分類喔！");
-
-            let results = [];
-            selectedBlocks.forEach(block => {
-                const catName = block.innerText.trim();
-                const pool = allProducts.filter(p => p.subCat === catName);
-                if (pool.length > 0) {
-                    let weightedPool = [];
-                    pool.forEach(p => {
-                        let weight = (p.daysLeft < 30 && p.daysLeft >= 0) ? 12 : 1;
-                        for(let i=0; i<weight; i++) weightedPool.push(p);
-                    });
-                    results.push(weightedPool[Math.floor(Math.random() * weightedPool.length)]);
-                }
-            });
-            if (results.length > 0) showResult(results);
-            else alert("選取的分類中找不到產品，請確認 Notion 資料內容。");
-        }
-
-        function showResult(items) {
-            const list = document.getElementById('result-list');
-            list.innerHTML = "";
-            ["💧 保養品", "💄 化妝品", "🔧 工具"].forEach(g => {
-                const gItems = items.filter(i => i.mainGroup === g);
-                if (gItems.length > 0) {
-                    const gDiv = document.createElement('div');
-                    gDiv.className = "result-group";
-                    gDiv.innerHTML = `<div class="result-group-header">${g}</div>`;
-                    gItems.forEach(i => {
-                        gDiv.innerHTML += `
-                            <div class="result-item">
-                                <div class="result-brand">${i.brand}</div>
-                                <div class="result-name">${i.name}</div>
-                                ${i.note ? `<div class="result-note">💡 ${i.note}</div>` : ''}
-                                ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 建議斷捨離（已過期）</div>` : ''}
-                            </div>`;
-                    });
-                    list.appendChild(gDiv);
-                }
-            });
-            document.getElementById('result-modal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('result-modal').style.display = 'none'; }
-
-        function saveAuth() {
-            const t = document.getElementById('input-token').value.trim();
-            const d = document.getElementById('input-dbid').value.trim();
-            if (t && d) {
-                localStorage.setItem('notion_token', t);
-                localStorage.setItem('notion_dbid', d);
-                NOTION_TOKEN = t; DATABASE_ID = d;
-                init();
-            } else { alert("請填入完整資料！"); }
-        }
-        init();
-    </script>
-</body>
-</html>
+        <h3 style="color:#8d6e63; font-size:1.2rem;">🔑 請輸入連線金鑰</h3>
+        <input type="text" id="input-dbid" placeholder="1. Database ID">
+        <input type="password" id="input-token" placeholder="2. Notion Token">
+        <button onclick="saveAuth()" style="width:100%; padding:18px; background:#d4a373; color:white; border:none; border
