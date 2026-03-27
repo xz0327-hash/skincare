@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小竹的後宮抽獎機</title>
+    <style>
+        :root {
+            --bg-color: #f8f5f2;
+            --card-bg: #ffffff;
+            --primary-text: #4a4a4a;
+            --accent-care: #e8f1f2; /* 保養品淡藍 */
+            --accent-makeup: #fce4ec; /* 化妝品粉紅 */
+            --accent-tool: #f0f4c3; /* 工具淡綠 */
+            --active-color: #d4a373;
+            --alert-red: #ff8a80;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        h1 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; letter-spacing: 1px; }
+
+        /* 快捷鍵區域 */
+        .quick-modes {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px; width: 100%; max-width: 500px; margin-bottom: 25px;
+        }
+        .mode-btn {
+            background: var(--card-bg); border: none; padding: 12px;
+            border-radius: 12px; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
+        }
+        .mode-btn:active { transform: scale(0.95); background: var(--active-color); color: white; }
+
+        /* 分類方塊區域 */
+        .section-title { width: 100%; max-width: 500px; margin: 15px 0 8px; font-size: 0.9rem; color: #888; }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px; width: 100%; max-width: 500px; margin-bottom: 20px;
+        }
+        .category-block {
+            background: var(--card-bg); aspect-ratio: 1/1; border-radius: 15px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-size: 0.85rem; cursor: pointer; text-align: center; padding: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03); border: 2px solid transparent;
+            transition: 0.3s; user-select: none;
+        }
+        .category-block.selected { border-color: var(--active-color); background: #fffcf9; font-weight: bold; }
+        .category-block i { font-size: 1.5rem; margin-bottom: 5px; }
+
+        /* 開始按鈕 */
+        #draw-btn {
+            position: fixed; bottom: 30px; width: 80%; max-width: 400px;
+            background: var(--active-color); color: white; border: none;
+            padding: 18px; border-radius: 50px; font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(212, 163, 115, 0.3); z-index: 100;
+        }
+
+        /* 結果彈窗 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 200;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; width: 85%; max-width: 350px; padding: 30px;
+            border-radius: 25px; text-align: center; position: relative;
+        }
+        .modal.alert .modal-content { border: 4px solid var(--alert-red); }
+        .result-item { margin: 15px 0; padding: 10px; border-bottom: 1px dashed #eee; }
+        .result-name { font-weight: bold; font-size: 1.1rem; color: #d48e4d; }
+        .result-note { font-size: 0.8rem; color: #999; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>✨ 小竹的後宮抽獎機</h1>
+
+    <div class="quick-modes">
+        <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
+        <button class="mode-btn" onclick="setMode('full')">💄 全妝</button>
+        <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
+    </div>
+
+    <div id="main-ui">正在連線 Notion...</div>
+
+    <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
+
+    <!-- 結果彈窗 -->
+    <div id="result-modal" class="modal" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 id="modal-title">✨ 今日菜單 ✨</h2>
+            <div id="result-list"></div>
+            <p id="declutter-msg" style="color:red; font-weight:bold; margin-top:20px; display:none;"></p>
+            <button onclick="document.getElementById('result-modal').style.display='none'" style="margin-top:20px; padding:10px 20px; border-radius:20px; border:none; background:#eee;">跪謝主子</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 填寫這裡 ---
+        const NOTION_TOKEN = "ntn_k94971572797IvZc9C8t0I0zzD7AzWTjBhSWr89rLYdb5g";
+        const DATABASE_ID = "173236131e9f80babac9fb245e6f8d2b";
+
+        let allProducts = [];
+        let categoriesByGroup = {};
+
+        async function init() {
+            try {
+                // 使用 Proxy 避開跨網域限制（開發測試用，生產環境建議架設微型後端）
+                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://api.notion.com/v1/databases/' + DATABASE_ID + '/query')}`, {
+                    method: 'GET'
+                });
+                const rawData = await response.json();
+                const data = JSON.parse(rawData.contents);
+
+                allProducts = data.results.map(item => {
+                    const p = item.properties;
+                    return {
+                        name: p["名稱"]?.title[0]?.plain_text || "未命名",
+                        mainCat: p["統計"]?.relation[0]?.id || "其他", // 關連欄位先抓 ID
+                        subCat: p["分類"]?.select?.name || "未分類",
+                        daysLeft: p["公式_到期天數"]?.formula?.number ?? 999,
+                        note: p["使用備註"]?.rich_text[0]?.plain_text || ""
+                    };
+                });
+
+                renderUI();
+            } catch (e) {
+                document.getElementById('main-ui').innerText = "連線失敗，請檢查 Token 與 ID！";
+            }
+        }
+
+        function renderUI() {
+            const container = document.getElementById('main-ui');
+            container.innerHTML = "";
+            
+            // 找出所有不重複的小分類
+            const subs = [...new Set(allProducts.map(p => p.subCat))];
+            
+            const grid = document.createElement('div');
+            grid.className = "grid";
+            subs.forEach(s => {
+                const div = document.createElement('div');
+                div.className = "category-block";
+                div.id = `cat-${s}`;
+                div.innerHTML = `<span>${s}</span>`;
+                div.onclick = () => div.classList.toggle('selected');
+                grid.appendChild(div);
+            });
+            container.appendChild(grid);
+        }
+
+        function setMode(mode) {
+            document.querySelectorAll('.category-block').forEach(b => b.classList.remove('selected'));
+            let targets = [];
+            if (mode === 'simple') targets = ['化妝水', '乳液/霜', '防曬/妝前', '定妝'];
+            if (mode === 'full') targets = [...new Set(allProducts.map(p => p.subCat))];
+            
+            targets.forEach(t => {
+                const el = document.getElementById(`cat-${t}`);
+                if (el) el.classList.add('selected');
+            });
+        }
+
+        function startDraw() {
+            const selectedCats = Array.from(document.querySelectorAll('.category-block.selected')).map(el => el.innerText);
+            if (selectedCats.length === 0) return alert("請先選幾個分類喔！");
+
+            let results = [];
+            let forceAlert = false;
+
+            selectedCats.forEach(cat => {
+                const pool = allProducts.filter(p => p.subCat === cat);
+                if (pool.length > 0) {
+                    // 權重計算
+                    let weightedPool = [];
+                    pool.forEach(p => {
+                        let weight = 1;
+                        if (p.daysLeft < 0) weight = 0.1; // 過期品其實機率該降低，但會觸發強制警報
+                        else if (p.daysLeft < 30) weight = 15;
+                        else if (p.daysLeft < 180) weight = 5;
+                        
+                        for(let i=0; i<weight*10; i++) weightedPool.push(p);
+                    });
+                    const pick = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+                    results.push(pick);
+                    if (pick.daysLeft < 0) forceAlert = true;
+                }
+            });
+
+            showResult(results, forceAlert);
+        }
+
+        function showResult(items, isExpired) {
+            const modal = document.getElementById('result-modal');
+            const list = document.getElementById('result-list');
+            const declutter = document.getElementById('declutter-msg');
+            
+            list.innerHTML = items.map(i => `
+                <div class="result-item">
+                    <div style="font-size:0.8rem; color:#999">${i.subCat}</div>
+                    <div class="result-name">${i.name}</div>
+                    ${i.note ? `<div class="result-note">💡 ${i.note}</div>` : ''}
+                </div>
+            `).join('');
+
+            // A+B 混合警報
+            declutter.style.display = "none";
+            modal.classList.remove('alert');
+            
+            if (isExpired) {
+                modal.classList.add('alert');
+                declutter.innerText = "🚨 斷捨離警告：抽到過期品了！主子，這罐真的該說再見了！";
+                declutter.style.display = "block";
+            } else if (Math.random() < 0.2) {
+                declutter.innerText = "🧐 靈魂拷問：這罐妳現在用還會心動嗎？不心動就送人吧！";
+                declutter.style.display = "block";
+            }
+
+            modal.style.display = "flex";
+        }
+
+        init();
+    </script>
+</body>
+</html>
