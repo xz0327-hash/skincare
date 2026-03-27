@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>後宮抽獎機 v9</title>
+    <title>後宮抽獎機 v10</title>
 
-    <!-- 桌面圖示設定 (確保妳 GitHub 上的檔名是 icon.jpg) -->
+    <!-- 桌面圖示設定 (請確保 GitHub 上的檔名是 icon.jpg) -->
     <link rel="apple-touch-icon" href="icon.jpg">
     <link rel="icon" type="image/jpeg" href="icon.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -44,7 +44,7 @@
             border: 1px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1.1rem;
         }
 
-        /* 模式切換鈕 */
+        /* 模式按鈕 */
         .quick-modes {
             display: flex; gap: 10px; width: 100%; max-width: 600px; 
             margin-bottom: 25px; flex-wrap: wrap; justify-content: center;
@@ -55,7 +55,7 @@
         }
         .mode-btn.clear { color: var(--alert-red); border-color: #ffebee; }
 
-        /* 分類方塊 */
+        /* 分類格 */
         .group-container { width: 100%; max-width: 800px; margin-bottom: 30px; }
         .group-title { font-size: 1.1rem; font-weight: bold; color: #bc8f8f; margin: 20px 0 12px 5px; }
         
@@ -73,7 +73,7 @@
         }
         .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; }
 
-        /* 抽獎按鈕 */
+        /* 固定抽獎鈕 */
         #draw-btn {
             position: fixed; bottom: 35px; width: 85%; max-width: 450px;
             background: #d4a373; color: white; border: none;
@@ -81,7 +81,7 @@
             box-shadow: 0 10px 30px rgba(212, 163, 115, 0.4); z-index: 100;
         }
 
-        /* 結果視窗 */
+        /* 結果彈窗 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 200;
@@ -99,39 +99,36 @@
         .priority-tag { display: inline-block; background: #fff3e0; color: #e65100; font-size: 0.75rem; padding: 4px 10px; border-radius: 8px; margin-top: 8px; font-weight: bold; }
         .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.85rem; margin-top: 10px; }
 
+        /* 靈魂拷問樣式 */
         .soul-question {
             background: var(--soft-pink); border: 2px dashed #f4d3d3; padding: 20px;
             border-radius: 25px; margin-top: 15px; text-align: center;
         }
-        .soul-question p { margin: 0; font-size: 1rem; color: #c62828; line-height: 1.6; }
+        .soul-question p { margin: 0; font-size: 1rem; color: #c62828; line-height: 1.6; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <h1>✨ 後宮寵幸抽獎機</h1>
 
-    <!-- 權限輸入區 -->
     <div id="auth-section" style="display:none;">
         <h3 style="color:#8d6e63; margin-bottom:15px;">🔑 請連接 Notion</h3>
         <input type="text" id="input-dbid" placeholder="Database ID">
         <input type="password" id="input-token" placeholder="Notion Token">
         <button onclick="saveAuth()" style="width:100%; padding:18px; background:#d4a373; color:white; border:none; border-radius:15px; font-weight:bold; font-size:1.1rem;">開啟門扉</button>
-        <p style="font-size:0.8rem; color:#999; margin-top:15px;">( 重新貼上 ID 與 Token 即可恢復 )</p>
     </div>
 
-    <!-- 主程式區 -->
     <div id="app-container" style="display:none; width:100%; max-width:800px;">
         <div class="quick-modes">
             <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
             <button class="mode-btn" onclick="setMode('full')">💄 全選</button>
             <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
-            <button class="mode-btn clear" onclick="setMode('clear')">🧹 清除</button>
+            <button class="mode-btn clear" onclick="setMode('clear')">Sweep</button>
         </div>
         <div id="main-ui"></div>
         <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
     </div>
 
-    <!-- 結果彈窗 -->
     <div id="result-modal" class="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 style="text-align:center; color:#8d6e63; font-size:1.4rem; margin:0;">✨ 今日寵幸名單 ✨</h2>
@@ -147,13 +144,10 @@
         let allProducts = [];
 
         async function init() {
-            // 如果沒金鑰，顯示登入區
             if (!NOTION_TOKEN || !DATABASE_ID) {
                 document.getElementById('auth-section').style.display = 'block';
-                document.getElementById('app-container').style.display = 'none';
                 return;
             }
-
             document.getElementById('auth-section').style.display = 'none';
             document.getElementById('app-container').style.display = 'block';
             document.getElementById('main-ui').innerHTML = "<p style='text-align:center; color:#888; margin-top:50px; font-size:1.1rem;'>👸 正在召喚後宮...</p>";
@@ -181,12 +175,9 @@
                         };
                     });
                     renderUI();
-                } else {
-                    throw new Error("格式錯誤");
                 }
             } catch (e) {
-                console.error(e);
-                alert("連線失敗！請點擊標題重新輸入金鑰。");
+                alert("連線失敗！請重貼 ID 與 Token。");
                 localStorage.clear();
                 location.reload();
             }
@@ -248,6 +239,7 @@
             const list = document.getElementById('result-list');
             const soulArea = document.getElementById('soul-area');
             list.innerHTML = ""; soulArea.innerHTML = "";
+            
             items.forEach(i => {
                 const isExpiring = i.daysLeft < 30 && i.daysLeft >= 0;
                 list.innerHTML += `
@@ -258,9 +250,21 @@
                         ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 已過期，真的還要用嗎？</div>` : ''}
                     </div>`;
             });
-            if (Math.random() < 0.3 || items.some(i => i.daysLeft < 0)) {
-                soulArea.innerHTML = `<div class="soul-question"><p>💭 這些愛妃您還心動嗎？不愛了就送她們出宮（斷捨離）吧！</p></div>`;
+
+            // 靈魂拷問隨機清單
+            const questions = [
+                "💭 這些愛妃您還心動嗎？不愛了就送她們出宮吧！",
+                "💭 報告主子：這幾位陪伴您很久了，真的還要繼續留著嗎？",
+                "💭 斷捨離不是浪費，是為了迎接下一位更心動的驚喜！",
+                "💭 🚨 偵測到過期愛妃！為了您的皮膚著想，請考慮狠心分手！"
+            ];
+
+            const hasExpired = items.some(i => i.daysLeft < 0);
+            if (Math.random() < 0.3 || hasExpired) {
+                const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                soulArea.innerHTML = `<div class="soul-question"><p>${randomQ}</p></div>`;
             }
+
             document.getElementById('result-modal').style.display = 'flex';
         }
 
@@ -273,12 +277,8 @@
                 localStorage.setItem('notion_token', t);
                 localStorage.setItem('notion_dbid', d);
                 location.reload();
-            } else {
-                alert("請填寫完整資訊！");
             }
         }
-
-        // 啟動開關
         init();
     </script>
 </body>
