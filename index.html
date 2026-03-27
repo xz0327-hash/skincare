@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>後宮抽獎機 v11.2</title>
+    <title>後宮抽獎機 v13</title>
 
     <!-- 桌面圖示設定 -->
     <link rel="apple-touch-icon" href="icon.jpg">
@@ -22,30 +22,49 @@
             --soft-pink: #fdf2f2;
         }
 
-        /* 修復 iOS 滑動判定：防止主畫面橡皮筋效果 */
+        /* ✨ 修復 iOS 滑動卡頓與邊緣判定 */
         html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             overflow-x: hidden;
-            height: 100%;
+            background-color: var(--bg-color);
             -webkit-overflow-scrolling: touch;
         }
 
         body {
             font-family: -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-            background-color: var(--bg-color);
             color: var(--primary-text);
-            margin: 0; padding: 15px;
             display: flex; flex-direction: column; align-items: center;
-            padding-bottom: env(safe-area-inset-bottom, 140px);
+            /* 底部留白確保不被按鈕擋住 */
+            padding: 20px 15px 180px 15px; 
+            box-sizing: border-box;
         }
 
-        /* 背景鎖定樣式 */
+        /* 彈窗開啟時鎖定背景 */
         .no-scroll { overflow: hidden; position: fixed; width: 100%; }
 
         h1 { font-size: 1.6rem; margin: 25px 0; font-weight: 600; letter-spacing: 2px; color: #8d6e63; text-align: center; }
 
-        .quick-modes { display: flex; gap: 10px; width: 100%; max-width: 600px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
-        .mode-btn { background: white; border: 1px solid #eee; padding: 12px 18px; border-radius: 30px; font-size: 1rem; cursor: pointer; }
-        .mode-btn.clear { color: var(--alert-red); border-color: #ffebee; }
+        /* ✨ 功能鍵：強迫四個在一列 */
+        .quick-modes { 
+            display: flex; 
+            gap: 8px; 
+            width: 100%; 
+            max-width: 500px; 
+            margin-bottom: 25px; 
+            justify-content: center;
+        }
+        .mode-btn { 
+            flex: 1;
+            background: white; border: 1px solid #eee; 
+            padding: 12px 0; 
+            border-radius: 15px; 
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
 
         .group-container { width: 100%; max-width: 800px; margin-bottom: 30px; }
         .group-title { font-size: 1.1rem; font-weight: bold; color: #bc8f8f; margin: 20px 0 12px 5px; }
@@ -54,40 +73,29 @@
         .category-block {
             background: white; aspect-ratio: 1/1; border-radius: 22px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.1rem; font-weight: 500; cursor: pointer; text-align: center; padding: 10px;
+            font-size: 1.05rem; font-weight: 500; cursor: pointer; text-align: center; padding: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 3px solid transparent; color: #6d4c41;
         }
         .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; }
 
+        /* ✨ 置中抽獎按鈕 */
+        .btn-wrapper {
+            position: fixed; bottom: 35px; left: 0; width: 100%;
+            display: flex; justify-content: center; pointer-events: none; z-index: 100;
+        }
         #draw-btn {
-            position: fixed; bottom: 35px; width: 85%; max-width: 450px;
+            pointer-events: auto;
+            width: 85%; max-width: 450px;
             background: #d4a373; color: white; border: none;
             padding: 22px; border-radius: 60px; font-size: 1.3rem; font-weight: bold;
-            box-shadow: 0 10px 30px rgba(212, 163, 115, 0.4); z-index: 100;
+            box-shadow: 0 10px 30px rgba(212, 163, 115, 0.4);
         }
 
-        /* 結果彈窗優化 */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 200;
-            justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: #fdfaf7; width: 92%; max-width: 420px; max-height: 80vh;
-            padding: 25px; border-radius: 40px; display: flex; flex-direction: column;
-            box-sizing: border-box;
-        }
-        
-        /* 強制內部滑動順暢 */
-        #result-list { 
-            overflow-y: auto; 
-            flex-grow: 1; 
-            margin: 15px 0; 
-            padding-right: 5px;
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        .result-item { background: white; margin-bottom: 12px; padding: 18px; border-radius: 22px; }
+        /* 結果彈窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 200; justify-content: center; align-items: center; }
+        .modal-content { background: #fdfaf7; width: 92%; max-width: 420px; max-height: 80vh; padding: 25px; border-radius: 40px; display: flex; flex-direction: column; box-sizing: border-box; }
+        #result-list { overflow-y: auto; flex-grow: 1; margin: 15px 0; padding-right: 5px; -webkit-overflow-scrolling: touch; }
+        .result-item { background: white; margin-bottom: 12px; padding: 18px; border-radius: 22px; border-left: 6px solid var(--accent-color); }
         .result-brand { font-size: 0.8rem; color: #9a8c98; letter-spacing: 1px; }
         .result-name { font-weight: bold; font-size: 1.25rem; color: #4e342e; margin: 4px 0; line-height: 1.3; }
         
@@ -96,30 +104,38 @@
 
         .soul-question { background: var(--soft-pink); border: 2px dashed #f4d3d3; padding: 20px; border-radius: 25px; margin-top: 10px; text-align: center; }
         .soul-question p { margin: 0; font-size: 1rem; color: #c62828; line-height: 1.6; font-weight: 500; }
+
+        /* 認證介面樣式 */
+        #auth-section input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
     <h1>✨ 後宮寵幸抽獎機</h1>
 
-    <div id="auth-section" style="display:none;">
+    <!-- 認證區 -->
+    <div id="auth-section" style="display:none; width: 90%; max-width: 400px;">
         <h3 style="color:#8d6e63; margin-bottom:15px; text-align:center;">🔑 請連接 Notion</h3>
         <input type="text" id="input-dbid" placeholder="Database ID">
         <input type="password" id="input-token" placeholder="Notion Token">
         <button onclick="saveAuth()" style="width:100%; padding:18px; background:#d4a373; color:white; border:none; border-radius:15px; font-weight:bold;">開啟門扉</button>
     </div>
 
+    <!-- 主 App 區 -->
     <div id="app-container" style="display:none; width:100%; max-width:800px;">
         <div class="quick-modes">
             <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
-            <button class="mode-btn" onclick="setMode('full')">💄 全選</button>
+            <button class="mode-btn" onclick="setMode('full')">💄 全妝</button>
             <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
-            <button class="mode-btn clear" onclick="setMode('clear')">🧹 清除</button>
+            <button class="mode-btn" onclick="setMode('clear')" style="color:var(--alert-red)">🧹 清除</button>
         </div>
         <div id="main-ui"></div>
-        <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
+        <div class="btn-wrapper">
+            <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
+        </div>
     </div>
 
+    <!-- 結果彈窗 -->
     <div id="result-modal" class="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 style="text-align:center; color:#8d6e63; font-size:1.4rem; margin:0;">✨ 今日寵幸名單 ✨</h2>
@@ -130,6 +146,12 @@
     </div>
 
     <script>
+        // ✨ 小分類順序自定義 ✨
+        const CUSTOM_ORDER = [
+            "化妝水", "精華液", "乳液/霜", "面膜", "身體", "私密處","按摩油", "洗面乳","卸妝",
+            "防曬/妝前", "底妝", "遮瑕", "定妝", "眼影", "腮紅","打亮", "修容","唇彩","睫毛膏","工具"
+        ];
+
         let NOTION_TOKEN = localStorage.getItem('notion_token');
         let DATABASE_ID = localStorage.getItem('notion_dbid');
         let allProducts = [];
@@ -141,7 +163,7 @@
             }
             document.getElementById('auth-section').style.display = 'none';
             document.getElementById('app-container').style.display = 'block';
-            document.getElementById('main-ui').innerHTML = "<p style='text-align:center; color:#888; margin-top:50px; font-size:1.1rem;'>👸 正在召喚後宮...</p>";
+            document.getElementById('main-ui').innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>👸 正在召喚後宮...</p>";
 
             try {
                 const url = `https://api.notion.com/v1/databases/${DATABASE_ID.trim()}/query`;
@@ -156,9 +178,8 @@
                     allProducts = data.results.map(item => {
                         const p = item.properties;
                         const sub = p["分類"]?.select?.name || "未分類";
-                        const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
+                        const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','眉彩','唇彩'];
                         
-                        // 支援色號顯示
                         const colorCode = p["色號"]?.rich_text?.[0]?.plain_text || p["色號"]?.select?.name || "";
                         const displayName = colorCode ? `${p["名稱"]?.title[0]?.plain_text} (${colorCode})` : (p["名稱"]?.title[0]?.plain_text || "未命名");
 
@@ -182,15 +203,26 @@
         function renderUI() {
             const container = document.getElementById('main-ui');
             container.innerHTML = "";
+            
             ["💧 保養品", "💄 化妝品", "🔧 工具"].forEach(gName => {
                 const groupProducts = allProducts.filter(p => p.mainGroup === gName);
                 if (groupProducts.length === 0) return;
-                const subCats = [...new Set(groupProducts.map(p => p.subCat))];
+                
+                let subCats = [...new Set(groupProducts.map(p => p.subCat))];
+                subCats.sort((a, b) => {
+                    let indexA = CUSTOM_ORDER.indexOf(a);
+                    let indexB = CUSTOM_ORDER.indexOf(b);
+                    if (indexA === -1) indexA = 999;
+                    if (indexB === -1) indexB = 999;
+                    return indexA - indexB;
+                });
+
                 const section = document.createElement('div');
                 section.className = "group-container";
                 section.innerHTML = `<div class="group-title">${gName}</div>`;
                 const grid = document.createElement('div');
                 grid.className = "grid-flow";
+                
                 subCats.forEach(s => {
                     const div = document.createElement('div');
                     div.className = "category-block";
@@ -210,6 +242,7 @@
             if (mode === 'full') blocks.forEach(b => b.classList.add('selected'));
             else if (mode === 'simple') ['化妝水', '乳液/霜', '防曬/妝前'].forEach(t => document.getElementById(`cat-${t}`)?.classList.add('selected'));
             else if (mode === 'random') [...blocks].sort(() => 0.5 - Math.random()).slice(0, 5).forEach(b => b.classList.add('selected'));
+            else if (mode === 'clear') blocks.forEach(b => b.classList.remove('selected'));
         }
 
         function startDraw() {
@@ -235,38 +268,17 @@
             const list = document.getElementById('result-list');
             const soulArea = document.getElementById('soul-area');
             list.innerHTML = ""; soulArea.innerHTML = "";
-            
             items.forEach(i => {
                 const isExpiring = i.daysLeft < 30 && i.daysLeft >= 0;
-                list.innerHTML += `
-                    <div class="result-item">
-                        <div class="result-brand">${i.brand}</div>
-                        <div class="result-name">${i.name}</div>
-                        ${isExpiring ? `<div class="priority-tag">🔥 優先寵幸 (即將到期)</div>` : ''}
-                        ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 已過期，真的還要用嗎？</div>` : ''}
-                    </div>`;
+                list.innerHTML += `<div class="result-item"><div class="result-brand">${i.brand}</div><div class="result-name">${i.name}</div>${isExpiring ? `<div class="priority-tag">🔥 優先寵幸 (即將到期)</div>` : ''}${i.daysLeft < 0 ? `<div class="expired-alert">🚨 已過期，真的還要用嗎？</div>` : ''}</div>`;
             });
-
             const questions = ["💭 心動嗎？不愛了就斷捨離吧！", "💭 陪伴很久了，還要留著嗎？", "💭 斷捨離是為了迎接下一個驚喜！", "💭 🚨 偵測到過期！皮膚要緊，分手吧！"];
-            if (Math.random() < 0.3 || items.some(i => i.daysLeft < 0)) {
-                soulArea.innerHTML = `<div class="soul-question"><p>${questions[Math.floor(Math.random() * questions.length)]}</p></div>`;
-            }
-
-            // 鎖定背景防止滑動衝突
+            if (Math.random() < 0.3 || items.some(i => i.daysLeft < 0)) soulArea.innerHTML = `<div class="soul-question"><p>${questions[Math.floor(Math.random() * questions.length)]}</p></div>`;
             document.body.classList.add('no-scroll');
             document.getElementById('result-modal').style.display = 'flex';
         }
-
-        function closeModal() { 
-            document.body.classList.remove('no-scroll'); // 解除背景鎖定
-            document.getElementById('result-modal').style.display = 'none'; 
-        }
-        
-        function saveAuth() {
-            const t = document.getElementById('input-token').value.trim();
-            const d = document.getElementById('input-dbid').value.trim();
-            if (t && d) { localStorage.setItem('notion_token', t); localStorage.setItem('notion_dbid', d); location.reload(); }
-        }
+        function closeModal() { document.body.classList.remove('no-scroll'); document.getElementById('result-modal').style.display = 'none'; }
+        function saveAuth() { const t = document.getElementById('input-token').value.trim(); const d = document.getElementById('input-dbid').value.trim(); if (t && d) { localStorage.setItem('notion_token', t); localStorage.setItem('notion_dbid', d); location.reload(); } }
         init();
     </script>
 </body>
