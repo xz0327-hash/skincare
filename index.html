@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>後宮抽獎機 v10.1</title>
+    <title>後宮抽獎機 v11</title>
 
     <!-- 桌面圖示設定 (請確保 GitHub 上的檔名是 icon.jpg) -->
     <link rel="apple-touch-icon" href="icon.jpg">
@@ -163,17 +163,22 @@
                 
                 if (data.results) {
                     allProducts = data.results.map(item => {
-                        const p = item.properties;
-                        const sub = p["分類"]?.select?.name || "未分類";
-                        const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
-                        return {
-                            name: p["名稱"]?.title[0]?.plain_text || "未命名",
-                            brand: p["品牌"]?.select?.name || p["品牌"]?.rich_text?.[0]?.plain_text || "無品牌",
-                            mainGroup: makeupCats.includes(sub) ? "💄 化妝品" : (sub === '工具' ? "🔧 工具" : "💧 保養品"),
-                            subCat: sub,
-                            daysLeft: p["公式_到期天數"]?.formula?.number ?? 999
-                        };
-                    });
+    const p = item.properties;
+    const sub = p["分類"]?.select?.name || "未分類";
+    const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
+    
+    // 新增這行：抓取妳在 Notion 新開的「色號」欄位
+    const colorCode = p["色號"]?.rich_text?.[0]?.plain_text || p["色號"]?.select?.name || "";
+
+    return {
+        // 修改這行：如果有名稱也有色號，就顯示「名稱 (色號)」
+        name: colorCode ? `${p["名稱"]?.title[0]?.plain_text} (${colorCode})` : (p["名稱"]?.title[0]?.plain_text || "未命名"),
+        brand: p["品牌"]?.select?.name || p["品牌"]?.rich_text?.[0]?.plain_text || "無品牌",
+        mainGroup: makeupCats.includes(sub) ? "💄 化妝品" : (sub === '工具' ? "🔧 工具" : "💧 保養品"),
+        subCat: sub,
+        daysLeft: p["公式_到期天數"]?.formula?.number ?? 999
+    };
+});
                     renderUI();
                 }
             } catch (e) {
