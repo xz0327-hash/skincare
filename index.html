@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小竹的後宮抽獎機 v2</title>
+    <title>小竹的後宮抽獎機 v3</title>
     <style>
         :root {
             --bg-color: #fdfaf7;
@@ -17,54 +17,38 @@
             font-family: -apple-system, "Noto Sans TC", sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
-            margin: 0; padding: 20px;
+            margin: 0; padding: 20px 15px;
             display: flex; flex-direction: column; align-items: center;
-            padding-bottom: 100px; /* 留空間給底部的按鈕 */
+            padding-bottom: 120px;
         }
 
-        h1 { font-size: 1.2rem; margin: 10px 0 20px; font-weight: 500; letter-spacing: 2px; color: #8d6e63; }
+        h1 { font-size: 1.1rem; margin: 10px 0; font-weight: 500; letter-spacing: 2px; color: #8d6e63; }
 
-        /* 認證區域 */
-        #auth-section {
-            background: #fff; padding: 20px; border-radius: 20px;
-            margin-bottom: 20px; width: 100%; max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        #auth-section input {
-            width: 100%; margin-bottom: 12px; padding: 12px;
-            border: 1px solid #eee; border-radius: 10px; box-sizing: border-box;
-        }
-
-        /* 快捷鍵 */
+        /* 快捷鍵區域 */
         .quick-modes {
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px; width: 100%; max-width: 500px; margin-bottom: 25px;
+            display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; overflow-x: auto; padding: 5px 0;
         }
         .mode-btn {
-            background: white; border: 1px solid #eee; padding: 12px;
-            border-radius: 15px; font-size: 0.9rem; cursor: pointer;
-            transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            white-space: nowrap; background: white; border: 1px solid #eee; padding: 8px 15px;
+            border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
         }
-        .mode-btn:active { background: var(--accent-color); color: white; }
+        .mode-btn.clear { border-color: #ffccbc; color: #ff7043; }
 
-        /* 分類區塊 */
-        .group-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
-        .group-title { 
-            font-size: 0.9rem; font-weight: bold; color: #bc8f8f; 
-            margin: 20px 0 10px 5px; display: flex; align-items: center;
-        }
-        .group-title::before { content: ""; width: 4px; height: 14px; background: #d4a373; margin-right: 8px; border-radius: 2px; }
+        /* 大分類區塊 */
+        .group-container { width: 100%; max-width: 500px; margin-bottom: 15px; }
+        .group-title { font-size: 0.9rem; font-weight: bold; color: #bc8f8f; margin: 10px 0; padding-left: 5px; }
 
-        .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
+        /* 小分類橫向捲動 */
+        .subcat-scroll {
+            display: flex; gap: 10px; overflow-x: auto; padding: 5px;
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
         }
         .category-block {
-            background: white; aspect-ratio: 1/1; border-radius: 18px;
+            flex: 0 0 85px; aspect-ratio: 1/1; background: white; border-radius: 15px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 0.85rem; cursor: pointer; text-align: center; padding: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.03); border: 2.5px solid transparent;
-            transition: 0.2s;
+            font-size: 0.8rem; cursor: pointer; text-align: center; padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 2px solid transparent;
+            transition: 0.2s; scroll-snap-align: start;
         }
         .category-block.selected { border-color: var(--accent-color); background: #fffcf9; color: var(--accent-color); font-weight: bold; }
 
@@ -72,179 +56,153 @@
         #draw-btn {
             position: fixed; bottom: 30px; width: 85%; max-width: 400px;
             background: #d4a373; color: white; border: none;
-            padding: 20px; border-radius: 50px; font-size: 1.1rem;
+            padding: 18px; border-radius: 50px; font-size: 1rem;
             box-shadow: 0 8px 20px rgba(212, 163, 115, 0.4); z-index: 100;
-            font-weight: bold; letter-spacing: 1px;
         }
 
-        /* 結果視窗修正 */
+        /* 結果視窗 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 200;
             justify-content: center; align-items: center;
         }
         .modal-content {
-            background: white; width: 85%; max-width: 380px; 
-            max-height: 80vh; /* 限制高度 */
-            padding: 25px; border-radius: 30px; position: relative;
-            display: flex; flex-direction: column;
+            background: #fdfaf7; width: 90%; max-width: 380px; max-height: 80vh;
+            padding: 20px; border-radius: 30px; display: flex; flex-direction: column;
         }
-        #result-list {
-            overflow-y: auto; /* 開啟垂直滑動 */
-            flex-grow: 1;
-            margin: 15px 0;
-            padding-right: 5px;
+        #result-list { overflow-y: auto; flex-grow: 1; margin: 10px 0; }
+        
+        /* 結果分區樣式 */
+        .result-group { margin-bottom: 20px; }
+        .result-group-header { 
+            font-size: 0.8rem; color: #bc8f8f; border-bottom: 1px dashed #bc8f8f; 
+            padding-bottom: 5px; margin-bottom: 10px; font-weight: bold;
         }
         .result-item { 
-            background: #fdfaf7; margin-bottom: 12px; padding: 15px; 
-            border-radius: 15px; border-left: 5px solid #ede0d4;
+            background: white; margin-bottom: 10px; padding: 12px; 
+            border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-        .result-brand { font-size: 0.75rem; color: #9a8c98; text-transform: uppercase; letter-spacing: 1px; }
-        .result-name { font-weight: bold; font-size: 1.05rem; color: #4e342e; margin: 4px 0; }
-        .result-note { font-size: 0.8rem; color: #8d6e63; font-style: italic; }
+        .result-brand { font-size: 0.7rem; color: #9a8c98; letter-spacing: 1px; }
+        .result-name { font-weight: bold; font-size: 1rem; color: #4e342e; margin: 2px 0; }
+        .result-note { font-size: 0.75rem; color: #8d6e63; }
+        .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.75rem; margin-top: 5px; border-top: 1px solid #ffebee; }
 
-        .expired-alert { color: var(--alert-red); font-weight: bold; font-size: 0.85rem; margin-top: 5px; border-top: 1px solid #ffebee; padding-top: 5px; }
+        /* 隱藏捲軸但保留功能 */
+        .subcat-scroll::-webkit-scrollbar, #result-list::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
     <h1>✨ 小竹的後宮抽獎機</h1>
 
-    <!-- 登入區域 -->
-    <div id="auth-section">
-        <input type="password" id="input-token" placeholder="貼上 Notion Token">
-        <input type="text" id="input-dbid" placeholder="貼上 Database ID">
-        <button onclick="saveAuth()" style="width:100%; padding:12px; background:#d4a373; color:white; border:none; border-radius:10px;">開始裝修化妝台</button>
-    </div>
-
-    <!-- 模式切換 -->
-    <div class="quick-modes" id="modes-ui" style="display:none;">
+    <div class="quick-modes" id="modes-ui">
         <button class="mode-btn" onclick="setMode('simple')">🧼 簡單</button>
-        <button class="mode-btn" onclick="setMode('full')">💄 全妝</button>
-        <button class="mode-btn" onclick="setMode('random')">🎲 隨機</button>
+        <button class="mode-btn" onclick="setMode('full')">💄 全選</button>
+        <button class="mode-btn clear" onclick="setMode('clear')">🧹 清除</button>
     </div>
 
-    <!-- 分類分區顯示 -->
     <div id="main-ui"></div>
 
-    <button id="draw-btn" onclick="startDraw()" style="display:none;">今日寵幸 ➔</button>
+    <button id="draw-btn" onclick="startDraw()">今日寵幸 ➔</button>
 
-    <!-- 結果彈窗 -->
     <div id="result-modal" class="modal" onclick="this.style.display='none'">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 style="text-align:center; color:#8d6e63; font-size:1.2rem;">✨ 今日寵幸名單 ✨</h2>
+            <h2 style="text-align:center; color:#8d6e63; font-size:1.1rem;">✨ 今日寵幸名單 ✨</h2>
             <div id="result-list"></div>
-            <button onclick="document.getElementById('result-modal').style.display='none'" style="width:100%; padding:15px; border-radius:50px; border:none; background:#ede0d4; color:#795548; font-weight:bold;">謝主隆恩</button>
+            <button onclick="document.getElementById('result-modal').style.display='none'" style="width:100%; padding:15px; border-radius:50px; border:none; background:#d4a373; color:white; font-weight:bold;">謝主隆恩</button>
         </div>
     </div>
 
     <script>
-        let NOTION_TOKEN = localStorage.getItem('notion_token');
-        let DATABASE_ID = localStorage.getItem('notion_dbid');
+        const NOTION_TOKEN = localStorage.getItem('notion_token');
+        const DATABASE_ID = localStorage.getItem('notion_dbid');
         let allProducts = [];
 
         async function init() {
-            if (!NOTION_TOKEN || !DATABASE_ID) return;
-            
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('modes-ui').style.display = 'grid';
-            document.getElementById('draw-btn').style.display = 'block';
-            document.getElementById('main-ui').innerHTML = "<p style='text-align:center;'>正在從 Notion 搬運後宮...</p>";
-
+            if (!NOTION_TOKEN || !DATABASE_ID) return (location.href = 'index.html'); // 防呆
             try {
                 const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
-                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-
-                const response = await fetch(proxyUrl, {
+                const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${NOTION_TOKEN}`,
-                        'Notion-Version': '2022-06-28',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
                     body: JSON.stringify({}) 
                 });
-
                 const data = await response.json();
                 
                 allProducts = data.results.map(item => {
                     const p = item.properties;
-                    // 修正：抓取「統計」這個 Relation 欄位的名稱（假設名稱存放在這裡）
-                    // 若抓不到，我們先預設顯示
-                    let group = "其他";
-                    const stats = p["統計"]?.relation;
-                    // 註：Relation 欄位通常需要另一次 Query 抓名稱，我們先用簡單邏輯：
-                    // 如果分類是底妝/腮紅等，歸類為化妝品，其餘為保養品
-                    const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
                     const sub = p["分類"]?.select?.name || "未分類";
-                    group = makeupCats.includes(sub) ? "💄 化妝品" : "💧 保養品";
-                    if (sub === '工具') group = "🔧 工具";
-
+                    const makeupCats = ['底妝','防曬/妝前','遮瑕','定妝','腮紅','修容','打亮','眼影','睫毛膏','唇彩'];
                     return {
                         name: p["名稱"]?.title[0]?.plain_text || "未命名",
                         brand: p["品牌"]?.select?.name || p["品牌"]?.rich_text?.[0]?.plain_text || "",
-                        mainGroup: group,
+                        mainGroup: makeupCats.includes(sub) ? "💄 化妝品" : (sub === '工具' ? "🔧 工具" : "💧 保養品"),
                         subCat: sub,
                         daysLeft: p["公式_到期天數"]?.formula?.number ?? 999,
                         note: p["使用備註"]?.rich_text[0]?.plain_text || ""
                     };
                 });
-
                 renderUI();
-            } catch (e) {
-                localStorage.clear();
-                alert("連線失敗，請檢查資料後重新整理！");
-                location.reload();
-            }
+            } catch (e) { console.error(e); }
         }
 
         function renderUI() {
             const container = document.getElementById('main-ui');
             container.innerHTML = "";
-            
-            // 按大項分組
             const groups = ["💧 保養品", "💄 化妝品", "🔧 工具"];
             
             groups.forEach(gName => {
                 const groupProducts = allProducts.filter(p => p.mainGroup === gName);
                 if (groupProducts.length === 0) return;
-
                 const subCats = [...new Set(groupProducts.map(p => p.subCat))];
                 
                 const section = document.createElement('div');
                 section.className = "group-container";
                 section.innerHTML = `<div class="group-title">${gName}</div>`;
                 
-                const grid = document.createElement('div');
-                grid.className = "grid";
-                
+                const scrollDiv = document.createElement('div');
+                scrollDiv.className = "subcat-scroll";
                 subCats.forEach(s => {
                     const div = document.createElement('div');
                     div.className = "category-block";
                     div.id = `cat-${s}`;
                     div.innerHTML = `<span>${s}</span>`;
                     div.onclick = () => div.classList.toggle('selected');
-                    grid.appendChild(div);
+                    scrollDiv.appendChild(div);
                 });
-                
-                section.appendChild(grid);
+                section.appendChild(scrollDiv);
                 container.appendChild(section);
             });
         }
 
-        function setMode(mode) {
-            document.querySelectorAll('.category-block').forEach(b => b.classList.remove('selected'));
-            let targets = [];
-            if (mode === 'simple') targets = ['化妝水', '乳液/霜', '防曬/妝前'];
-            if (mode === 'full' || mode === 'random') {
-                document.querySelectorAll('.category-block').forEach(b => b.classList.add('selected'));
-            } else {
-                targets.forEach(t => {
-                    const el = document.getElementById(`cat-${t}`);
-                    if (el) el.classList.add('selected');
-                });
-            }
-        }
+function setMode(mode) {
+    const blocks = Array.from(document.querySelectorAll('.category-block'));
+    // 先全部清空，重新開始
+    blocks.forEach(b => b.classList.remove('selected'));
+
+    if (mode === 'clear') {
+        // 已經清空了，直接結束
+        return;
+    } else if (mode === 'full') {
+        // 全選
+        blocks.forEach(b => b.classList.add('selected'));
+    } else if (mode === 'simple') {
+        // 簡單模式：固定那幾項
+        ['化妝水', '乳液/霜', '防曬/妝前'].forEach(t => {
+            const el = document.getElementById(`cat-${t}`);
+            if (el) el.classList.add('selected');
+        });
+    } else if (mode === 'random') {
+        // 【核心修改】隨機挑選 4~7 個分類
+        const randomCount = Math.floor(Math.random() * 4) + 4; 
+        const shuffled = blocks.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, randomCount);
+        selected.forEach(b => b.classList.add('selected'));
+        
+        // 震動或小提示讓妳知道選好了
+        console.log(`隨機選取了 ${randomCount} 個分類`);
+    }
+}
 
         function startDraw() {
             const selectedCats = Array.from(document.querySelectorAll('.category-block.selected')).map(el => el.innerText);
@@ -256,35 +214,40 @@
                 if (pool.length > 0) {
                     let weightedPool = [];
                     pool.forEach(p => {
-                        let weight = (p.daysLeft < 30 && p.daysLeft >= 0) ? 20 : (p.daysLeft < 180 ? 5 : 1);
+                        let weight = (p.daysLeft < 30 && p.daysLeft >= 0) ? 10 : 1;
                         for(let i=0; i<weight; i++) weightedPool.push(p);
                     });
                     results.push(weightedPool[Math.floor(Math.random() * weightedPool.length)]);
                 }
             });
-
             showResult(results);
         }
 
         function showResult(items) {
             const list = document.getElementById('result-list');
-            list.innerHTML = items.map(i => `
-                <div class="result-item">
-                    <div class="result-brand">${i.brand}</div>
-                    <div class="result-name">${i.name}</div>
-                    ${i.note ? `<div class="result-note">💡 ${i.note}</div>` : ''}
-                    ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 斷捨離警告：這罐已過期！</div>` : ''}
-                </div>
-            `).join('');
+            list.innerHTML = "";
+            const groups = ["💧 保養品", "💄 化妝品", "🔧 工具"];
+            
+            groups.forEach(g => {
+                const gItems = items.filter(i => i.mainGroup === g);
+                if (gItems.length > 0) {
+                    const gDiv = document.createElement('div');
+                    gDiv.className = "result-group";
+                    gDiv.innerHTML = `<div class="result-group-header">${g}</div>`;
+                    gItems.forEach(i => {
+                        gDiv.innerHTML += `
+                            <div class="result-item">
+                                <div class="result-brand">${i.brand}</div>
+                                <div class="result-name">${i.name}</div>
+                                ${i.note ? `<div class="result-note">💡 ${i.note}</div>` : ''}
+                                ${i.daysLeft < 0 ? `<div class="expired-alert">🚨 建議斷捨離（已過期）</div>` : ''}
+                            </div>`;
+                    });
+                    list.appendChild(gDiv);
+                }
+            });
             document.getElementById('result-modal').style.display = 'flex';
         }
-
-        function saveAuth() {
-            localStorage.setItem('notion_token', document.getElementById('input-token').value.trim());
-            localStorage.setItem('notion_dbid', document.getElementById('input-dbid').value.trim());
-            location.reload();
-        }
-
         init();
     </script>
 </body>
